@@ -74,16 +74,16 @@ class Auth0Auth(Auth):
 
         return flask.redirect(uri, code=302)
 
-def auth_wrapper(self, f):
-    def wrap(*args, **kwargs):
-        if AUTH_FLASK_ROUTES:
-            if not self.is_authorized():
-                # Redirect to Auth0 login instead of returning 403
-                return self.login_request()
-        response = f(*args, **kwargs)
-        return response
+    def auth_wrapper(self, f):
+        def wrap(*args, **kwargs):
+            if AUTH_FLASK_ROUTES:
+                if not self.is_authorized():
+                    # Redirect to Auth0 login instead of returning 403
+                    return self.login_request()
+            response = f(*args, **kwargs)
+            return response
 
-    return wrap
+        return wrap
 
     def index_auth_wrapper(self, original_index):
         def wrap(*args, **kwargs):
