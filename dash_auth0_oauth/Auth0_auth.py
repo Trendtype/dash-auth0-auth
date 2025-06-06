@@ -22,10 +22,10 @@ CLIENT_SECRET = os.environ.get('AUTH0_AUTH_CLIENT_SECRET')
 LOGOUT_URL = os.environ.get('AUTH0_LOGOUT_URL')
 AUTH_REDIRECT_URI = '/login/callback'
 
-AUTH_FLASK_ROUTES = os.environ.get('AUTH_FLASK_ROUTES',"false")
+AUTH_FLASK_ROUTES = os.environ.get('AUTH_FLASK_ROUTES', "false").lower()
 if AUTH_FLASK_ROUTES == "true":
     AUTH_FLASK_ROUTES = True
-if AUTH_FLASK_ROUTES == "false":
+elif AUTH_FLASK_ROUTES == "false":
     AUTH_FLASK_ROUTES = False
 else:
     print(f"warning: AUTH_FLASK_ROUTES is set to {AUTH_FLASK_ROUTES}. Must be 'true' or 'false', otherwise will raise this warning and be set to False.")
@@ -74,15 +74,16 @@ class Auth0Auth(Auth):
 
         return flask.redirect(uri, code=302)
 
-    def auth_wrapper(self, f):
-        def wrap(*args, **kwargs):
-            if AUTH_FLASK_ROUTES:
-                if not self.is_authorized():
-                    return flask.Response(status=403)
-            response = f(*args, **kwargs)
-            return response
+def auth_wrapper(self, f):
+    def wrap(*args, **kwargs):
+        if AUTH_FLASK_ROUTES:
+            if not self.is_authorized():
+                # Redirect to Auth0 login instead of returning 403
+                return self.login_request()
+        response = f(*args, **kwargs)
+        return response
 
-        return wrap
+    return wrap
 
     def index_auth_wrapper(self, original_index):
         def wrap(*args, **kwargs):
